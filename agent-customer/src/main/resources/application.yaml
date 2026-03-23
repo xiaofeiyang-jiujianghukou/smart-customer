@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: agent-customer
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  http:
+    converters:
+      preferred-json-mapper: jackson2
+  jackson:
+    write:
+      date-timestamps: false
+    find-and-add-modules: true

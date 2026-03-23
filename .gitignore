@@ -1,0 +1,12 @@
+# 忽略数据库数据文件
+db/data/
+
+.idea/
+
+agent-customer/target
+order-service/target
+product-service/target
+
+agent-customer/.idea
+order-service/.idea
+product-service/.idea
