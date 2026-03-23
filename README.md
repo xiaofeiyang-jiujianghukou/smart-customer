@@ -34,6 +34,7 @@
 ```bash
 git clone https://github.com/xiaofeiyang-jiujianghukou/smart-customer.git
 cd smart-customer
+docker-compose up -d --build
 ```
 
 ### 2\. 配置文件
