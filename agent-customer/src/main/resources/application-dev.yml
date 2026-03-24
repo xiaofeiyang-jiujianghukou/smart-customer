@@ -45,7 +45,7 @@ springdoc:
 llm:
   model:
     name: deepseek-chat
-    apiKey: sk-febeb6cb0a414add80bc435162a5495a
+    apiKey: sk-xxxxxxxxxxxxxxxxxxxxxxx
     baseUrl: https://api.deepseek.com/chat/completions
 
 app:
