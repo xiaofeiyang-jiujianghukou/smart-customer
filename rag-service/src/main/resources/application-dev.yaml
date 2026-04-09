@@ -1,0 +1,93 @@
+spring:
+  datasource:
+    # 显式指定使用 HikariCP (其实默认就是，但写出来更清晰)
+    type: com.zaxxer.hikari.HikariDataSource
+    # URL 修改：指定 127.0.0.1 和 数据库名
+    url: jdbc:postgresql://127.0.0.1:5432/postgres?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: postgres
+    password: xfy@930112
+    # driver-class-name 已移除，由 Spring Boot 4.0 自动推断
+
+    hikari:
+      # 连接池名称
+      pool-name: order-service-Hikari-Pool
+      # 最小空闲连接数 (建议设为 CPU 核心数 * 2)
+      minimum-idle: 5
+      # 最大连接数 (虚拟线程环境下可以适当调大，因为线程开销小，但受限于 DB 处理能力)
+      # 公式参考：CPU 核心数 * 2 + 磁盘数，一般设为 20-50 足够
+      maximum-pool-size: 20
+      # 连接超时时间 (毫秒)
+      connection-timeout: 30000
+      # 空闲连接超时时间 (毫秒)
+      idle-timeout: 600000
+      # 连接最大生命周期 (毫秒)，建议比数据库服务器的 wait_timeout 短几分钟
+      max-lifetime: 1800000
+      # 测试查询 (PostgreSQL 推荐 SELECT 1)
+      connection-test-query: SELECT 1
+      # 开启泄漏检测 (开发环境设为 60000 即 1 分钟，生产环境建议关闭或设很大，避免性能损耗)
+      leak-detection-threshold: 60000
+
+  # MyBatis-Plus 配置
+  mybatis-plus:
+    mapper-locations: classpath*:/mapper/**/*.xml
+    type-aliases-package: com.truejarvis.entity
+    type-handlers-package: com.truejarvis.config.handler  # 扫描 TypeHandler
+    configuration:
+      map-underscore-to-camel-case: true
+      # 开发环境开启 SQL 日志，生产环境建议关闭或使用 logback 配置
+      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    global-config:
+      db-config:
+        id-type: auto # 使用雪花算法生成 ID
+        logic-delete-field: deleted
+        logic-delete-value: 1
+        logic-not-delete-value: 0
+
+  ai:
+    # --- 核心配置：OpenAI 适配器 (实际指向 DeepSeek) ---
+    openai:
+      api-key: sk-a41ebd38c93c43269e46a6ec46787f18          # 你的 DeepSeek Key
+      base-url: https://dashscope.aliyuncs.com/compatible-mode    # 指向 DeepSeek 官方地址
+      chat:
+        options:
+          model: qwen-plus              # 聊天模型：deepseek-chat 或 deepseek-reasoner
+      embedding:
+        options:
+          model: text-embedding-v4            # 向量模型：DeepSeek 官方 Embedding 模型
+    vectorstore:
+      pgvector:
+        initialize-schema: true      # 自动建表
+        dimensions: 1024             # 向量维度
+        index-type: HNSW             # 索引类型
+        distance-type: COSINE_DISTANCE  # 距离度量
+        table-name: vector_store     # 表名
+        # 添加批处理配置
+#        batching-strategy:
+#          max-batch-size: 5
+
+
+
+# 日志配置 (可选)
+logging:
+  level:
+    com.truejarvis: DEBUG
+    com.baomidou.mybatisplus: DEBUG
+
+springdoc:
+  # API 文档路径 (默认 /v3/api-docs)
+  api-docs:
+    path: /v3/api-docs
+  # Swagger UI 路径 (默认 /swagger-ui.html -> 重定向到 /swagger-ui/index.html)
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true # 开发环境开启
+    operations-sorter: alpha # 按字母顺序排序接口
+    tags-sorter: alpha
+    # 尝试将 Swagger UI 请求映射到后端 API (解决部分网关代理问题)
+    url: /v3/api-docs
+
+  # 分组显示 (可选，用于区分不同模块)
+  group-configs:
+    - group: "core-api"
+      paths-to-match: "/**"
+      packages-to-scan: "com.ai.agent.controller"

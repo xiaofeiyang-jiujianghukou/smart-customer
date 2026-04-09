@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>4.0.3</version>
+		<relativePath/>
+	</parent>
+
+	<groupId>com.ai</groupId>
+	<artifactId>rag-service</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
+	<name>Rag Service</name>
+	<description>Rag Service</description>
+
+	<properties>
+		<java.version>25</java.version>
+		<mybatis-plus.version>3.5.15</mybatis-plus.version>
+		<minio.version>8.5.12</minio.version>
+		<postgresql.version>42.7.4</postgresql.version>
+		<spring-ai.version>2.0.0-M4</spring-ai.version>
+	</properties>
+
+	<!-- 注意：如果是 M6 版本，可能需要添加 Spring Milestones 仓库 -->
+	<repositories>
+		<!-- Spring Milestones 仓库 -->
+		<repository>
+			<id>spring-milestones</id>
+			<name>Spring Milestones</name>
+			<url>https://repo.spring.io/milestone</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<!-- Spring Snapshots 仓库（如果需要 SNAPSHOT 版本） -->
+		<repository>
+			<id>spring-snapshots</id>
+			<name>Spring Snapshots</name>
+			<url>https://repo.spring.io/snapshot</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+
+	<dependencies>
+		<!-- 1. Web Core (Virtual Threads Ready) -->
+		<!-- ✅ 正确：引入 Web 启动器，它会自动包含兼容 Spring Boot 4.0.3 的 Jackson 3 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<!-- OpenAI 模型 Starter（2.x 新命名） -->
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-model-openai</artifactId>
+			<version>${spring-ai.version}</version>
+		</dependency>
+
+		<!-- PgVector 向量存储 Starter（2.x 新命名） -->
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-vector-store-pgvector</artifactId>
+			<version>${spring-ai.version}</version>
+		</dependency>
+
+
+		<!-- 4. （可选）PDF 文档解析器，方便你导入文档构建知识库 -->
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-pdf-document-reader</artifactId>
+			<version>${spring-ai.version}</version>
+		</dependency>
+
+		<!-- 用于解析 HTML/Markdown 表格 -->
+		<dependency>
+			<groupId>org.jsoup</groupId>
+			<artifactId>jsoup</artifactId>
+			<version>1.16.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-tika-document-reader</artifactId>
+			<version>${spring-ai.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.pdfbox</groupId>
+			<artifactId>pdfbox</artifactId>
+			<version>2.0.33</version> <!-- 或者最新版本 -->
+		</dependency>
+
+		<dependency>
+			<groupId>technology.tabula</groupId>
+			<artifactId>tabula</artifactId>
+			<version>1.0.5</version>
+		</dependency>
+
+		<!--<dependency>
+			<groupId>com.alibaba.cloud.ai</groupId>
+			<artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
+			<version>1.1.2.2</version>
+		</dependency>-->
+
+		<!-- 需要显式添加 JDBC Starter（2.x 不再自动引入） -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
+		</dependency>
+
+		<!-- 4. PostgreSQL 驱动 -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- 3. MyBatis-Plus (ORM) -->
+		<dependency>
+			<groupId>com.baomidou</groupId>
+			<artifactId>mybatis-plus-spring-boot4-starter</artifactId>
+			<version>3.5.15</version>
+		</dependency>
+
+		<!-- 【新增】分页功能必需的 SQL 解析器依赖 (3.5.9+ 必须手动引入) -->
+		<dependency>
+			<groupId>com.baomidou</groupId>
+			<artifactId>mybatis-plus-jsqlparser</artifactId>
+			<version>3.5.15</version> <!-- 版本号必须与 starter 保持一致 -->
+		</dependency>
+
+		<dependency>
+			<groupId>com.baomidou</groupId>
+			<artifactId>mybatis-plus-generator</artifactId>
+			<version>3.5.15</version> <!-- 替换为你使用的 MyBatis-Plus 版本 -->
+		</dependency>
+
+		<dependency>
+			<groupId>org.jodd</groupId>
+			<artifactId>jodd-core</artifactId>
+			<version>5.0.10</version>
+		</dependency>
+
+		<dependency>
+			<groupId>cn.hutool</groupId>
+			<artifactId>hutool-all</artifactId>
+			<version>5.3.10</version>
+		</dependency>
+
+		<!-- 8. Utilities -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<!-- Swagger (SpringDoc OpenAPI): 适配 Spring Boot 4.x / 3.3+ -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.8.8</version> <!-- 2026年较新的稳定版本，完美支持 SB 4 -->
+		</dependency>
+
+		<!-- 9. Test -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.alibaba.fastjson2</groupId>
+			<artifactId>fastjson2</artifactId>
+			<version>2.0.53</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.alibaba.fastjson2</groupId>
+			<artifactId>fastjson2-extension-spring6</artifactId>
+			<version>2.0.53</version>
+		</dependency>
+
+		<!-- 显式使用 Jackson2 -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+			<version>2.21.1</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<!-- Spring Boot 插件 -->
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+
+			<!-- 🔥 关键修改：Maven 编译器插件 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.15.0</version>
+				<configuration>
+					<source>25</source>
+					<target>25</target>
+					<encoding>UTF-8</encoding>
+
+					<!-- 🔥 必须添加这部分：告诉 Maven 编译时使用 Lombok 处理器 -->
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<!-- 版本建议与 dependency 中的保持一致，或者不写版本让 Maven 自动解析 -->
+							<!-- 如果 dependency 没写版本，这里最好也不写，或者写上 spring-boot-parent 管理的版本 -->
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

@@ -1,0 +1,118 @@
+version: '3.9'
+
+services:
+  # ================= 核心应用：真维斯 (TrueJarvis) =================
+  truejarvis:
+    image: truejarvis-server:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: truejarvis-core
+    ports:
+      - "18080:8080"
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      # 数据库配置 (指向 postgres-db 服务名)
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/truejarvis_db
+      - SPRING_DATASOURCE_USERNAME=jarvis_admin
+      - SPRING_DATASOURCE_PASSWORD=jarvis_secure_pwd_2026
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      # Redis 配置
+      - SPRING_DATA_REDIS_HOST=redis-cache
+      - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_DATA_REDIS_PASSWORD=
+      # MinIO 配置
+      - MINIO_ENDPOINT=http://minio-storage:9000
+      - MINIO_ACCESS_KEY=minio_admin
+      - MINIO_SECRET_KEY=minio_secure_pwd_2026
+      - MINIO_BUCKET_NAME=truejarvis-files
+      # MyBatis-Plus 日志 (可选)
+      - MYBATIS_PLUS_CONFIGURATION_LOG_IMPL=org.apache.ibatis.logging.stdout.StdOutImpl
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      minio-storage:
+        condition: service_healthy
+    networks:
+      - jarvis-net
+    restart: unless-stopped
+    # 针对 JDK 25 和虚拟线程的 JVM 调优
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # ================= 数据库：PostgreSQL + Pgvector =================
+  postgres-db:
+    image: pgvector/pgvector:pg17 # 使用最新的 PG17 + vector 镜像，完美支持 JDK 25 驱动
+    container_name: jarvis-postgres
+    environment:
+      POSTGRES_DB: truejarvis_db
+      POSTGRES_USER: jarvis_admin
+      POSTGRES_PASSWORD: jarvis_secure_pwd_2026
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "15432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jarvis_admin -d truejarvis_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - jarvis-net
+    restart: unless-stopped
+
+  # ================= 缓存：Redis =================
+  redis-cache:
+    image: redis:7-alpine
+    container_name: jarvis-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    ports:
+      - "16379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - jarvis-net
+    restart: unless-stopped
+
+  # ================= 对象存储：MinIO =================
+  minio-storage:
+    image: minio/minio:latest
+    container_name: jarvis-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio_admin
+      MINIO_ROOT_PASSWORD: minio_secure_pwd_2026
+    volumes:
+      - miniodata:/data
+    ports:
+      - "19000:9000"
+      - "19001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - jarvis-net
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+
+networks:
+  jarvis-net:
+    driver: bridge

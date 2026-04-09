@@ -3,6 +3,8 @@ db/data/
 
 .idea/
 
+target/
+
 agent-customer/target
 order-service/target
 product-service/target

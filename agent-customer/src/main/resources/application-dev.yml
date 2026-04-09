@@ -3,7 +3,7 @@ data:
   redis:
     host: 127.0.0.1 # 指向 docker-compose 中的服务名
     port: 6379
-    password:
+    password: xfy@930112
     timeout: 5000ms
     # Lettuce 连接池配置 (依赖 commons-pool2)
     lettuce:
